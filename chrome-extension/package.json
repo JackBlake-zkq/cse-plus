@@ -1,0 +1,30 @@
+{
+	"name": "cse-plus",
+	"displayName": "UW Madison - Course Search & Enroll +",
+	"version": "0.0.1",
+	"description": "A basic Plasmo extension.",
+	"author": "Jack Blake",
+	"type": "module",
+	"scripts": {
+		"dev": "plasmo dev",
+		"build": "plasmo build",
+		"test": "plasmo test"
+	},
+	"dependencies": {
+		"plasmo": "0.80.0",
+		"react": "18.2.0",
+		"react-dom": "18.2.0"
+	},
+	"devDependencies": {
+		"@types/chrome": "0.0.241",
+		"@types/node": "20.4.2",
+		"@types/react": "18.2.15",
+		"@types/react-dom": "18.2.7",
+		"typescript": "5.1.6"
+	},
+	"manifest": {
+		"host_permissions": [
+			"https://*/*"
+		]
+	}
+}

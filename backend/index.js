@@ -7,11 +7,15 @@ const { PORT, MAD_KEY } = process.env
 
 import express from "express"
 import axios from "axios"
+import cors from "cors"
 
 import rmpModule from '@mtucourses/rate-my-professors'
 const rmp = rmpModule.default
 
 const app = express()
+app.use(cors({
+    origin: 'https://enroll.wisc.edu'
+}))
 
 const madgrades = axios.create({
     baseURL: 'https://api.madgrades.com',
@@ -22,26 +26,27 @@ const madgrades = axios.create({
 })
 
 app.get("/madgrades/courses", async (req, res) => {
-    let { subjectQuery, subjectAbbrev, courseNumber } = req.query
-    let out = {}
+    let { subjectAbbrev, courseNumber } = req.query
+    let out = {
+        confident: true
+    }
     try {
-        let subjectsRes = await madgrades.get(`/v1/subjects?query=${subjectQuery}`)
-        let subjects = subjectsRes.data?.results
 
-        let subject = subjects.find(subj => subj.abbreviation == subjectAbbrev)
-        if(!subject) {
-            res.send("Subject not found").status(404);
-            return
-        }
-
-        let coursesRes = await madgrades.get(`/v1/courses?subject=${subject.code}&number=${courseNumber}`)
+        let coursesRes = await madgrades.get(`/v1/courses?query=${subjectAbbrev} ${courseNumber}`)
         let courses = coursesRes.data?.results
         if(!courses || courses.length < 1) {
-            res.send("Course not found").status(404);
+            res.sendStatus(404)
             return
         }
+        let course = courses.find(course => (
+            +course.number == +courseNumber && course.subjects.some(subject => subject.abbreviation == subjectAbbrev)
+        ))
+        if(!course) {
+            out.confident = false;
+            course = courses[0]
+        }
 
-        let infoUrl = courses[0].url
+        let infoUrl = course.url
         let courseRes = await madgrades.get(infoUrl)
         let { gradesUrl, uuid } = courseRes.data
         out.webUrl = `https://madgrades.com/courses/${uuid}`
@@ -66,7 +71,7 @@ app.get("/rmp/profs", async (req, res) => {
             ...await rmp.searchTeacher(profQuery, "U2Nob29sLTE4NDE4") 
         ]
         if(teachers.length < 1) {
-            res.send("No teachers found with that name").status(404);
+            res.sendStatus(404);
             return
         }
         let { id } = teachers[0]

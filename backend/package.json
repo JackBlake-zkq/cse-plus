@@ -14,6 +14,7 @@
   "dependencies": {
     "@mtucourses/rate-my-professors": "^2.2.1",
     "axios": "^1.4.0",
+    "cors": "^2.8.5",
     "express": "^4.18.2"
   },
   "devDependencies": {
