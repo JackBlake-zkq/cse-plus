@@ -1,8 +1,5 @@
 const prod = process.env.NODE_ENV === "production"
 
-import { config } from "dotenv"
-if(!prod) config();
-
 const { PORT, MAD_KEY } = process.env
 
 import express from "express"
