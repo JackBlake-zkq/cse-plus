@@ -97,6 +97,7 @@ async function injectRMP() {
     let profData = await profRes.json()
     let { avgRating, webUrl } = profData
     for(let elem of elems) {
+      if(elem.innerHTML.includes("RMP")) continue
       let a = document.createElement("a")
       a.href = webUrl
       a.textContent = `RMP ${avgRating}/5`

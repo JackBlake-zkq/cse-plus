@@ -2,12 +2,12 @@
 	"name": "cse-plus",
 	"displayName": "UW Madison - Course Search & Enroll +",
 	"version": "0.0.1",
-	"description": "A basic Plasmo extension.",
+	"description": "Injects Madgrades and Rate My Professors data into the UW-Madison Course Search & Enroll Page",
 	"author": "Jack Blake",
 	"type": "module",
 	"scripts": {
 		"dev": "plasmo dev",
-		"build": "plasmo build",
+		"build": "plasmo build && zip -r build/chrome-mv3-prod build/chrome-mv3-prod ",
 		"test": "plasmo test"
 	},
 	"dependencies": {
@@ -24,7 +24,7 @@
 	},
 	"manifest": {
 		"host_permissions": [
-			"https://*/*"
+			"https://enroll.wisc.edu/*"
 		]
 	}
 }
