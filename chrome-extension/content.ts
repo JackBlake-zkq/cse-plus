@@ -38,28 +38,28 @@ async function injectMadgrades() {
 
   let [subjectAbbrev, courseNumber] = detailsPane.firstElementChild.firstElementChild.children[1].textContent.split(/ (?=\d)/)
 
-  let madUrl = `${process.env.PLASMO_PUBLIC_BACKEND_URL}/madgrades/courses?subjectAbbrev=${encodeURIComponent(subjectAbbrev)}&courseNumber=${encodeURIComponent(courseNumber)}`
-  if (lastUrl == madUrl) return
+  let url = `${process.env.PLASMO_PUBLIC_BACKEND_URL}/madgrades/courses?subjectAbbrev=${encodeURIComponent(subjectAbbrev)}&courseNumber=${encodeURIComponent(courseNumber)}`
+  if (lastUrl == url) return
 
   controller.abort()
   controller = new AbortController()
 
-  lastUrl = madUrl
+  lastUrl = url
 
   madAnchor.textContent = ""
 
   let injectionArea = detailsPane.firstElementChild.children[1].firstElementChild.firstElementChild.firstElementChild
   injectionArea.after(madAnchor)
 
-  let courseRes
+  let courseRes: Response
   let timeout = setTimeout(() => {
     controller.abort()
     madAnchor.href = "https://madgrades.com/"
     madAnchor.textContent = "Madgrades: Request Timed Out"
-  }, 3000)
+  }, 5000)
 
   try {
-    courseRes = await fetch(madUrl, { signal: controller.signal })
+    courseRes = await fetch(url, { signal: controller.signal })
   } catch(e) {
     clearTimeout(timeout)
     return
@@ -93,14 +93,37 @@ async function injectRMP() {
   }
   for(let [profName, elems] of Object.entries(instructorNameToElems)) {
     let url = `${process.env.PLASMO_PUBLIC_BACKEND_URL}/rmp/profs?profQuery=${encodeURIComponent(profName)}`
-    let profRes = await fetch(url)
-    let profData = await profRes.json()
-    let { avgRating, webUrl } = profData
+    let profRes: Response
+    let profData = null
+    let errMsg = null
+    let timeout = setTimeout(() => {
+      controller.abort()
+    }, 5000)
+  
+    try {
+      profRes = await fetch(url, { signal: controller.signal })
+      if(profRes.status != 200) {
+        errMsg = "RMP: Unknown Error Occured"
+        if(profRes.status == 404) {
+          errMsg = "RMP: Prof Not Found"
+        }
+      } else {
+        profData = await profRes.json()
+      }
+    } catch(e) {
+      errMsg = "RMP: Unknown Error Occured"
+    }
+    clearTimeout(timeout)
     for(let elem of elems) {
       if(elem.innerHTML.includes("RMP")) continue
       let a = document.createElement("a")
-      a.href = webUrl
-      a.textContent = `RMP ${avgRating}/5`
+      if(profData) {
+        a.href = profData.webUrl
+        a.textContent = `RMP avg is ${profData.avgRating}/5 with ${profData.numRatings} ratings`
+      } else {
+        a.href = `https://www.ratemyprofessors.com/search/professors/18418?q=${encodeURIComponent(profName)}`
+        a.textContent = errMsg
+      }
       a.style.display = "block"
       a.target = "_blank"
       elem.appendChild(a)
