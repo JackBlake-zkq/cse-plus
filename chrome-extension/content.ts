@@ -13,7 +13,7 @@ let sectionsObserver: MutationObserver
 const observer = new MutationObserver(() => {
   detailsPane = document.getElementById("details")
   if(detailsPane && !detailsObserver) {
-    detailsObserver = new MutationObserver(injectMadgrades)
+    detailsObserver = new MutationObserver(() => { injectMadgrades(); injectRMP() })
     detailsObserver.observe(detailsPane, {subtree: true, childList: true })
   }
   sectionsPane = document.getElementById("sections")
@@ -36,7 +36,16 @@ let controller = new AbortController()
 async function injectMadgrades() {
   if(!detailsPane) return;
 
-  let [subjectAbbrev, courseNumber] = detailsPane.firstElementChild.firstElementChild.children[1].textContent.split(/ (?=\d)/)
+  let contentArr = detailsPane.firstElementChild?.firstElementChild?.children
+  if(!contentArr ) return
+  let courseElem = contentArr[1]
+  if(!courseElem) return
+
+  if(!courseElem.textContent) return
+  
+  let [subjectAbbrev, courseNumber] = courseElem.textContent.split(/ (?=\d)/)
+  courseNumber = courseNumber.replace(" sections", "")
+  console.log({subjectAbbrev, courseNumber})
 
   let url = `${process.env.PLASMO_PUBLIC_BACKEND_URL}/madgrades/courses?subjectAbbrev=${encodeURIComponent(subjectAbbrev)}&courseNumber=${encodeURIComponent(courseNumber)}`
   if (lastUrl == url) return
@@ -83,7 +92,14 @@ async function injectMadgrades() {
 }
 
 async function injectRMP() {
-  let instructorElems = Array.from(sectionsPane.querySelectorAll(".one-instructor, .instructor p:nth-child(2) strong"))
+  let query = ".one-instructor, .instructor p:nth-child(2) strong"
+  let instructorElems = []
+  if(sectionsPane) instructorElems.push(...Array.from(
+    sectionsPane.querySelectorAll(query)
+  ))
+  if(detailsPane) instructorElems.push(...Array.from(
+    detailsPane.querySelectorAll(query)
+  ))
   let instructorNameToElems: {[profName: string]: Element[]} = {}
   for(let instructorElem of instructorElems) {
     if(instructorElem.innerHTML.includes("RMP")) continue
