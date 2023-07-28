@@ -4,50 +4,43 @@ export const config: PlasmoCSConfig = {
 	matches: ["https://enroll.wisc.edu/*"]
 }
 
-let detailsPane: HTMLElement
-let sectionsPane: HTMLElement
-let detailsObserver: MutationObserver
-let sectionsObserver: MutationObserver
-
-
-const observer = new MutationObserver(() => {
-  detailsPane = document.getElementById("details")
-  if(detailsPane && !detailsObserver) {
-    detailsObserver = new MutationObserver(() => { injectMadgrades(); injectRMP() })
-    detailsObserver.observe(detailsPane, {subtree: true, childList: true })
+const observer = new MutationObserver((records) => {
+  if(!records.some(record => Array.from(record.addedNodes).some(node => (
+      node instanceof HTMLAnchorElement && node.classList.contains("cse-plus-inserted")
+    ))
+  )) {
+    injectMadgrades();
+    injectRMP();
   }
-  sectionsPane = document.getElementById("sections")
-  if(sectionsPane && !sectionsObserver) {
-    sectionsObserver = new MutationObserver(injectRMP)
-    sectionsObserver.observe(sectionsPane, {subtree: true, childList: true })
-  }
-  if(detailsPane && sectionsPane) observer.disconnect();
 });
-observer.observe(document.body, {subtree: true, childList: true })
-
-let lastUrl = null
+observer.observe(document.body, { subtree: true, childList: true })
 
 const madAnchor = document.createElement("a")
 madAnchor.id = "mad"
 madAnchor.target = "_blank"
+madAnchor.classList.add("cse-plus-inserted")
 
 let controller = new AbortController()
+let lastUrl = null
 
 async function injectMadgrades() {
-  if(!detailsPane) return;
+  let detailsPane = document.getElementById("details")
+  if(!detailsPane) return
 
   let contentArr = detailsPane.firstElementChild?.firstElementChild?.children
   if(!contentArr ) return
+
   let courseElem = contentArr[1]
   if(!courseElem) return
 
   if(!courseElem.textContent) return
-  
-  let [subjectAbbrev, courseNumber] = courseElem.textContent.split(/ (?=\d)/)
-  courseNumber = courseNumber.replace(" sections", "")
-  console.log({subjectAbbrev, courseNumber})
+
+  let course = courseElem.textContent.match(/([A-Z] ?)+ \d{1,3}/)[0]
+
+  let [ subjectAbbrev, courseNumber ] = course.split(/ (?=\d)/)
 
   let url = `${process.env.PLASMO_PUBLIC_BACKEND_URL}/madgrades/courses?subjectAbbrev=${encodeURIComponent(subjectAbbrev)}&courseNumber=${encodeURIComponent(courseNumber)}`
+
   if (lastUrl == url) return
 
   controller.abort()
@@ -91,15 +84,8 @@ async function injectMadgrades() {
   madAnchor.textContent = `Madgrades:${confident ? "" : " *maybe* "} ${totalGraded == 0 ? "no grades yet, may be pass/fail" : Math.round((aCount / total) * 100) + "% get an A"}`
 }
 
-async function injectRMP() {
-  let query = ".one-instructor, .instructor p:nth-child(2) strong"
-  let instructorElems = []
-  if(sectionsPane) instructorElems.push(...Array.from(
-    sectionsPane.querySelectorAll(query)
-  ))
-  if(detailsPane) instructorElems.push(...Array.from(
-    detailsPane.querySelectorAll(query)
-  ))
+function injectRMP() {
+  let instructorElems = document.querySelectorAll(".one-instructor, .instructor p:nth-child(2) strong:not(:has(a))")
   let instructorNameToElems: {[profName: string]: Element[]} = {}
   for(let instructorElem of instructorElems) {
     if(instructorElem.innerHTML.includes("RMP")) continue
@@ -109,40 +95,47 @@ async function injectRMP() {
   }
   for(let [profName, elems] of Object.entries(instructorNameToElems)) {
     let url = `${process.env.PLASMO_PUBLIC_BACKEND_URL}/rmp/profs?profQuery=${encodeURIComponent(profName)}`
-    let profRes: Response
     let profData = null
     let errMsg = null
-    let timeout = setTimeout(() => {
-      controller.abort()
-    }, 5000)
   
-    try {
-      profRes = await fetch(url, { signal: controller.signal })
-      if(profRes.status != 200) {
+    fetchWithTimeout(url, 5000)
+    .then(async res => {
+      if(res.status != 200) {
         errMsg = "RMP: Unknown Error Occured"
-        if(profRes.status == 404) {
-          errMsg = "RMP: Prof Not Found"
+        if(res.status == 404) {
+          errMsg = "RMP: Prof Not Found at UW"
         }
       } else {
-        profData = await profRes.json()
+        try {
+          profData = await res.json()
+        } catch(e) {}
       }
-    } catch(e) {
+    })
+    .catch(err => {
       errMsg = "RMP: Unknown Error Occured"
-    }
-    clearTimeout(timeout)
-    for(let elem of elems) {
-      if(elem.innerHTML.includes("RMP")) continue
-      let a = document.createElement("a")
-      if(profData) {
-        a.href = profData.webUrl
-        a.textContent = `RMP avg is ${profData.avgRating}/5 with ${profData.numRatings} ratings`
-      } else {
-        a.href = `https://www.ratemyprofessors.com/search/professors/18418?q=${encodeURIComponent(profName)}`
-        a.textContent = errMsg
+    })
+    .finally(() => {
+      for(let elem of elems) {
+        if(elem.innerHTML.includes("RMP")) continue
+        let a = document.createElement("a")
+        if(profData) {
+          a.href = profData.webUrl
+          a.textContent = `RMP avg is ${profData.avgRating}/5 with ${profData.numRatings} ratings`
+        } else {
+          a.href = `https://www.ratemyprofessors.com/search/professors/18418?q=${encodeURIComponent(profName)}`
+          a.textContent = errMsg
+        }
+        a.style.display = "block"
+        a.target = "_blank"
+        a.classList.add("cse-plus-inserted")
+        elem.appendChild(a)
       }
-      a.style.display = "block"
-      a.target = "_blank"
-      elem.appendChild(a)
-    }
+    })  
   }
+}
+
+async function fetchWithTimeout(url: string, timeout: number) {
+  let controller = new AbortController()
+  setTimeout(() => controller.abort(), timeout)
+  return fetch(url).finally(() => clearTimeout(timeout))
 }
