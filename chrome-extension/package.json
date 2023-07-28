@@ -1,7 +1,7 @@
 {
 	"name": "cse-plus",
 	"displayName": "UW Madison - Course Search & Enroll +",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "Injects Madgrades and Rate My Professors data into the UW-Madison Course Search & Enroll Page",
 	"author": "Jack Blake",
 	"type": "module",
