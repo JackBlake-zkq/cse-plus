@@ -35,7 +35,10 @@ async function injectMadgrades() {
 
   if(!courseElem.textContent) return
 
-  let course = courseElem.textContent.match(/([A-Z] ?)+ \d{1,3}/)[0]
+  let courseMatches = courseElem.textContent.match(/([A-Z] ?)+ \d{1,3}/)
+  if(!courseMatches) return
+
+  let course = courseMatches[0]
 
   let [ subjectAbbrev, courseNumber ] = course.split(/ (?=\d)/)
 
