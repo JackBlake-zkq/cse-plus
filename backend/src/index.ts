@@ -1,13 +1,10 @@
-const prod = process.env.NODE_ENV === "production"
-
 const { PORT, MAD_KEY } = process.env
 
-import express from "express"
+import express, { Request, Response } from "express"
 import axios from "axios"
 import cors from "cors"
 
-import rmpModule from '@mtucourses/rate-my-professors'
-const rmp = rmpModule.default
+import rmp, { ITeacherPage } from '@mtucourses/rate-my-professors'
 
 const app = express()
 app.use(cors({
@@ -22,9 +19,13 @@ const madgrades = axios.create({
     }
 })
 
-app.get("/madgrades/courses", async (req, res) => {
-    let { subjectAbbrev, courseNumber } = req.query
-    let out = {
+app.get("/madgrades/courses", async (req: Request, res: Response) => {
+    let { subjectAbbrev, courseNumber } = req.query as { subjectAbbrev?: string, courseNumber: string }
+    if(!(subjectAbbrev && courseNumber)) {
+        res.sendStatus(400);
+        return
+    }
+    let out: { webUrl?: string, cumulative?: any, confident: boolean } = {
         confident: true
     }
     try {
@@ -35,8 +36,8 @@ app.get("/madgrades/courses", async (req, res) => {
             res.sendStatus(404)
             return
         }
-        let course = courses.find(course => (
-            +course.number == +courseNumber && course.subjects.some(subject => subject.abbreviation == subjectAbbrev)
+        let course = courses.find((c: any) => (
+            +c.number == +courseNumber && c.subjects.some((subject: any) => subject.abbreviation == subjectAbbrev)
         ))
         if(!course) {
             out.confident = false;
@@ -50,17 +51,21 @@ app.get("/madgrades/courses", async (req, res) => {
         let gradesRes = await madgrades.get(gradesUrl)
         let { cumulative } = gradesRes.data
         out.cumulative = cumulative
+        res.json(out).status(200)
     } catch(e) {
         console.log(e)
         res.sendStatus(500)
-        return
     }
-    res.json(out).status(200)
+
 })
 
-app.get("/rmp/profs", async (req, res) => {
-    let { profQuery } = req.query
-    let teacher
+app.get("/rmp/profs", async (req: Request, res: Response) => {
+    let { profQuery } = req.query as { profQuery?: string }
+    if(!profQuery) {
+        console.log("invalid q")
+        res.sendStatus(400);
+        return
+    }
     try {
         let teachers = [
             ...await rmp.searchTeacher(profQuery, "U2Nob29sLTEyNTY="),
@@ -72,13 +77,12 @@ app.get("/rmp/profs", async (req, res) => {
             return
         }
         let { id } = teachers[0]
-        teacher = await rmp.getTeacher(id)
+        let teacher: ITeacherPage & { webUrl?: string } = await rmp.getTeacher(id)
         teacher.webUrl = `https://www.ratemyprofessors.com/professor/${teacher.legacyId}`
+        res.send(teacher).status(200)
     } catch(e) {
         res.sendStatus(500);
-        return
     }
-    res.send(teacher).status(200)
 })
 
 
