@@ -1,7 +1,7 @@
 {
 	"name": "cse-plus",
 	"displayName": "UW Madison - Course Search & Enroll +",
-	"version": "0.1.0",
+	"version": "3",
 	"description": "Injects Madgrades and Rate My Professors data into the UW-Madison Course Search & Enroll Page",
 	"author": "Jack Blake",
 	"type": "module",
@@ -11,6 +11,8 @@
 		"test": "plasmo test"
 	},
 	"dependencies": {
+		"@mtucourses/rate-my-professors": "^2.2.1",
+		"@plasmohq/messaging": "^0.6.1",
 		"plasmo": "0.80.0",
 		"react": "18.2.0",
 		"react-dom": "18.2.0"
@@ -24,7 +26,9 @@
 	},
 	"manifest": {
 		"host_permissions": [
-			"https://enroll.wisc.edu/*"
+			"https://enroll.wisc.edu/*",
+			"https://api.madgrades.com/**",
+			"https://www.ratemyprofessors.com/graphql/**"
 		]
 	}
 }
