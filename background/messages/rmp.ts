@@ -12,11 +12,7 @@ const handler: PlasmoMessaging.MessageHandler<RMPInput, RMPOutput> = async (req,
         return
     }
     try {
-        let teachers = [
-            ...await rmp.searchTeacher(profQuery, "U2Nob29sLTEyNTY="),
-            //UW Madison has 2 school objects. I don't think this one has any profs on it but adding it to be safe
-            ...await rmp.searchTeacher(profQuery, "U2Nob29sLTE4NDE4") 
-        ]
+        let teachers = await rmp.searchTeacher(profQuery, "U2Nob29sLTEyNTY=")
         if(teachers.length < 1) {
             res.send({status: 404})
             return
