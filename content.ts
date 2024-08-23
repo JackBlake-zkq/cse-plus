@@ -1,7 +1,7 @@
 import type { PlasmoCSConfig } from "plasmo"
 import { sendToBackground } from "@plasmohq/messaging"
-import type { MadInput, MadOutput } from "~types/mad"
-import type { RMPInput, RMPOutput } from "~types/rmp"
+import type { MadOutput } from "~types/mad"
+import type { RMPOutput } from "~types/rmp"
 
 export const config: PlasmoCSConfig = {
 	matches: ["https://enroll.wisc.edu/*"]
@@ -23,7 +23,6 @@ madAnchor.id = "mad"
 madAnchor.target = "_blank"
 madAnchor.classList.add("cse-plus-inserted")
 
-let controller = new AbortController()
 let lastCourse;
 
 async function injectMadgrades() {
@@ -47,9 +46,6 @@ async function injectMadgrades() {
 
   if (lastCourse == course) return
 
-  controller.abort()
-  controller = new AbortController()
-
   lastCourse = course
 
   madAnchor.textContent = ""
@@ -57,18 +53,16 @@ async function injectMadgrades() {
   let injectionArea = detailsPane.firstElementChild.children[1].firstElementChild.firstElementChild.firstElementChild
   injectionArea.after(madAnchor)
 
-  let timeout = setTimeout(() => controller.abort(), 5000)
   let madOut: MadOutput;
   try {
     madOut = await sendToBackground({
       name: "mad",
-      body: { subjectAbbrev, courseNumber, controller }
+      body: { subjectAbbrev, courseNumber }
     })
   } catch(e) {
-    clearTimeout(timeout)
     return
   }
-  clearTimeout(timeout)
+
   if(madOut.status != 200) {
     madAnchor.href = "https://madgrades.com/"
     madAnchor.textContent = "Madgrades: Unknown Error Occured"
@@ -86,7 +80,7 @@ async function injectMadgrades() {
 }
 
 async function injectRMP() {
-  let instructorElems = document.querySelectorAll(".one-instructor, .instructor p:nth-child(2) strong:not(:has(a))")
+  let instructorElems = document.querySelectorAll(".one-instructor, .instructor p:nth-child(2) strong")
   let instructorNameToElems: {[profName: string]: Element[]} = {}
   for(let instructorElem of instructorElems) {
     if(instructorElem.innerHTML.includes("RMP")) continue

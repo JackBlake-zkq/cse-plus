@@ -7,7 +7,8 @@
 	"type": "module",
 	"scripts": {
 		"dev": "plasmo dev",
-		"build": "plasmo build && zip -r build/chrome-mv3-prod build/chrome-mv3-prod ",
+		"build-chrome": "plasmo build --zip",
+		"build-firefox": "plasmo build --zip --target=firefox-mv2",
 		"test": "plasmo test"
 	},
 	"dependencies": {

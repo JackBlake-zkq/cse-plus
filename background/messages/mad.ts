@@ -11,9 +11,15 @@ const INIT = {
     credentials: "include" as RequestCredentials
 }
 
+let controller = new AbortController()
+
 const handler: PlasmoMessaging.MessageHandler<MadInput, MadOutput> = async (req, res) => {
     console.log("mad handler invoked");
-    let { subjectAbbrev, courseNumber, controller } = req.body
+    let { subjectAbbrev, courseNumber } = req.body
+
+    controller.abort()
+    controller = new AbortController()
+    let timeout = setTimeout(() => controller.abort(), 5000)
 
     const init = {...INIT, signal: controller.signal }
 
@@ -52,6 +58,8 @@ const handler: PlasmoMessaging.MessageHandler<MadInput, MadOutput> = async (req,
     } catch(e) {
         console.log(e)
         res.send({status: 500})
+    } finally {
+        clearTimeout(timeout)
     }
 }
  
