@@ -6,6 +6,12 @@ Browser extension for UW Madison students that pulls [Rate My Professors](https:
 <a href="https://chrome.google.com/webstore/detail/uw-madison-course-search/ldnllmdimjknflobmdjnmefeollalodf">
 <img src="https://github.com/user-attachments/assets/e6f3ff4e-a48a-4cbb-8286-7e21abae9cd7" width="50" height="50"/>
 </a>
+&nbsp
+&nbsp
+&nbsp
+<a href="https://addons.mozilla.org/en-US/firefox/addon/uw-madison-cse-plus/">
+<img src="https://github.com/user-attachments/assets/6df6808f-7e7c-4ba4-b8b9-d1dcceabb5b2" width="50" height="50"/>
+</a>
 
 ## Implementation
 
