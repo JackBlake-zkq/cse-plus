@@ -29,7 +29,6 @@ const handler: PlasmoMessaging.MessageHandler<MadInput, MadOutput> = async (req,
     }
 
     let out: MadOutput = {
-        confident: true,
         status: 200
     }
 
@@ -44,8 +43,8 @@ const handler: PlasmoMessaging.MessageHandler<MadInput, MadOutput> = async (req,
             +c.number == +courseNumber && c.subjects.some((subject: any) => subject.abbreviation == subjectAbbrev)
         ))
         if(!course) {
-            out.confident = false;
-            course = courses[0]
+            res.send({status: 404})
+            return
         }
         let infoUrl = course.url
         let courseRes = await fetch(infoUrl, init)

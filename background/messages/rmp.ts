@@ -12,20 +12,33 @@ const handler: PlasmoMessaging.MessageHandler<RMPInput, RMPOutput> = async (req,
         return
     }
     try {
-        let teachers = [
-            ...await rmp.searchTeacher(profQuery, "U2Nob29sLTEyNTY="),
-            //UW Madison has 2 school objects. I don't think this one has any profs on it but adding it to be safe
-            ...await rmp.searchTeacher(profQuery, "U2Nob29sLTE4NDE4") 
-        ]
+        let teachers;
+        try {
+            teachers = [
+                ...await rmp.searchTeacher(profQuery, "U2Nob29sLTEyNTY="),
+                //UW Madison has 2 school objects. I don't think this one has any profs on it but adding it to be safe
+                ...await rmp.searchTeacher(profQuery, "U2Nob29sLTE4NDE4") 
+            ]
+        } catch(e) {
+            console.error(e)
+            res.send({status: 404})
+            return
+        }
         if(teachers.length < 1) {
             res.send({status: 404})
             return
         }
-        let { id } = teachers[0]
+        let teach = teachers.find(t => t.firstName + " " + t.lastName == profQuery)
+        if(!teach) {
+            res.send({status: 404})
+            return
+        }
+        let { id } = teach
         let teacher: RMPOutput = { ...await rmp.getTeacher(id), status: 200 }
         teacher.webUrl = `https://www.ratemyprofessors.com/professor/${teacher.legacyId}`
         res.send(teacher)
     } catch(e) {
+        console.error(e)
         res.send({status: 500})
     }
 }

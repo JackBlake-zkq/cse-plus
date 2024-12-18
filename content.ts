@@ -72,11 +72,11 @@ async function injectMadgrades() {
     return
   }
 
-  let { webUrl, cumulative, confident } = madOut
+  let { webUrl, cumulative } = madOut
   madAnchor.href = webUrl
   let { aCount, abCount, bCount, bcCount, cCount, dCount, fCount, total } = cumulative
   let totalGraded = aCount + abCount + bCount + bcCount + cCount + dCount + fCount
-  madAnchor.textContent = `Madgrades:${confident ? "" : " *maybe* "} ${totalGraded == 0 ? "no grades yet, may be pass/fail" : Math.round((aCount / total) * 100) + "% get an A"}`
+  madAnchor.textContent = `Madgrades: ${totalGraded == 0 ? "no grades yet, may be pass/fail" : Math.round((aCount / total) * 100) + "% get an A"}`
 }
 
 async function injectRMP() {
@@ -111,7 +111,11 @@ async function injectRMP() {
       let a = document.createElement("a")
       if(profData) {
         a.href = profData.webUrl
-        a.textContent = `RMP avg is ${profData.avgRating}/5 with ${profData.numRatings} ratings`
+        if(profData.numRatings < 1) {
+          a.textContent = `RMP: No ratings yet`
+        } else {
+          a.textContent = `RMP avg is ${profData.avgRating}/5 with ${profData.numRatings} ratings`
+        }
       } else {
         a.href = `https://www.ratemyprofessors.com/search/professors/18418?q=${encodeURIComponent(profName)}`
         a.textContent = errMsg
