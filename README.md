@@ -9,7 +9,7 @@ Browser extension for UW Madison students that pulls [Rate My Professors](https:
 &nbsp
 &nbsp
 &nbsp
-<a href="https://github.com/JackBlake-zkq/cse-plus/releases/tag/Firefox">
+<a href="https://github.com/JackBlake-zkq/cse-plus/releases">
 <img src="https://github.com/user-attachments/assets/6df6808f-7e7c-4ba4-b8b9-d1dcceabb5b2" width="50" height="50"/>
 </a>
 
